@@ -1,0 +1,99 @@
+<!Doctype HTML>
+<html>
+    <head>
+        <title>AppMoTo</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+        <script src="https://code.jquery.com/jquery-latest.min.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <style>
+            body {
+                margin-top: 40px;
+            }
+
+            #messageArea {
+                display:none;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div id="userFormArea" class="row">
+                <div class="col-md-12">
+                    <form id="userForm">
+                        <div class="form-group">
+                            <label>Enter Username</label>
+                            <textarea class="form-control" id="txtusername"></textarea>
+                            <br/>
+                            <input type="submit" class="btn btn-primary" value="Login" />
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div id="messageArea" class="row">
+                <div class="col-md-4">
+                    <div class="well">
+                        <h3>Online Users</h3>
+                        <ul class="list-group" id="users"></ul>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="chat" id="chat"></div>
+                    <form id="messageForm">
+                        <div class="form-group">
+                            <label>Enter Message</label>
+                            <textarea class="form-control" id="txtMessage"></textarea>
+                            <br/>
+                            <input type="submit" class="btn btn-primary" value="Send Message" />
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            $(function(){
+                var socket = io.connect();
+                var $messageForm = $('#messageForm');
+                var $message = $('#txtMessage');
+                var $chat = $('#chat');
+
+                var $messageArea = $('#messageArea');
+                var $userFormArea = $('#userFormArea');
+                var $userForm = $('#userForm');
+                var $users = $('#users');
+                var $username = $('#txtusername');
+
+                $messageForm.submit((e) => {
+                    e.preventDefault();
+                    socket.emit('send message', $message.val());
+                    $message.val('');
+                });
+
+                socket.on('new message', (data) => {
+                    $chat.append('<div class="card card-body bg-light">'+data.msg+'</div>');
+                });
+                
+                $userForm.submit((e) => {
+                    e.preventDefault();
+                    socket.emit('new user', $username.val(), (data) => {
+                        if(data){
+                            $userFormArea.hide();
+                            $messageArea.show();
+                        }
+                    });
+                    $username.val('');
+                });
+
+                socket.on('get users', (data) => {
+                    var html = '';
+                    console.log(data);
+                    console.log(data[0]);
+                    for(let i = 0;1 <= data.length; i++){
+                        html += '<li class="list-group-item">'+data[i]+'</li>'
+                    }
+                    $users.html(html);
+                });
+            });
+        </script>
+    </body>
+</html>
